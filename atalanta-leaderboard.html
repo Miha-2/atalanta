@@ -196,11 +196,10 @@
       overflow: hidden;
       padding: 14px 20px;
       margin-bottom: 28px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 0 12px;
       animation: fadeUp 0.6s 0.08s cubic-bezier(0.22,1,0.36,1) both;
     }
 
@@ -215,7 +214,7 @@
     .match-teams {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: 20px;
+      font-size: clamp(13px, 3.8vw, 20px);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--white);
@@ -227,7 +226,7 @@
       margin: 0 4px;
     }
     .match-meta {
-      font-size: 13px;
+      font-size: clamp(9px, 2.4vw, 13px);
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -237,11 +236,12 @@
     .match-score-badge {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 900;
-      font-size: 30px;
+      font-size: clamp(20px, 5vw, 30px);
       color: var(--gold);
       letter-spacing: 0.08em;
       white-space: nowrap;
       line-height: 1;
+      flex-shrink: 0;
     }
     .match-result-label {
       font-size: 12px;
@@ -685,6 +685,7 @@
         pts_label:          'pti',
         pts_col_label:      'Pti',
         you_tag:            'Tu',
+        you_position:       '↓ La tua posizione',
         footer_predict:     'Invia pronostico',
         footer_rules:       'Regolamento',
         footer_privacy:     'Privacy Policy',
@@ -703,6 +704,7 @@
         pts_label:          'pts',
         pts_col_label:      'Pts',
         you_tag:            'You',
+        you_position:       '↓ Your position',
         footer_predict:     'Submit prediction',
         footer_rules:       'Contest rules',
         footer_privacy:     'Privacy Policy',
@@ -789,52 +791,55 @@
     const tableEl = document.getElementById('lb-table');
     const PAGE_SIZE = 10;
 
-    const extraPool = Array.from({length: 96}, (_, i) => {
-      const nick = nicknames[(i + 3) % nicknames.length];
-      return {
-        name: nick + (i > 0 ? `_${i}` : ''),
-        pts: Math.max(1, entries[0].pts - 4 - i * Math.floor(Math.random() * 3 + 1)),
+    // BVB-style cumulative score generation — scores decrease steadily, no random jumps
+    const extraPool = [];
+    let lastPts = entries[2].pts;
+    for (let i = 0; i < 96; i++) {
+      lastPts = Math.max(1, lastPts - Math.floor(Math.random() * 3 + 1));
+      extraPool.push({
+        name: nicknames[(i + 3) % nicknames.length] + (i >= nicknames.length ? `_${Math.floor(i / nicknames.length)}` : ''),
+        pts: lastPts,
         trend: trends[i % trends.length],
-      };
-    });
-
-    let visibleCount = PAGE_SIZE;
-
-    function renderRows() {
-      tableEl.innerHTML = '';
-      extraPool.slice(0, visibleCount).forEach((e, i) => {
-        const pos = i + 4;
-        const trendIcon = { up: '▲', down: '▼', same: '—' }[e.trend];
-        tableEl.innerHTML += `
-          <div class="lb-row">
-            <div class="lb-pos">${pos}</div>
-            <div class="lb-info">
-              <div class="lb-name">${e.name} <span class="lb-trend ${e.trend}">${trendIcon}</span></div>
-            </div>
-            <div class="lb-pts-col">
-              <span class="lb-pts">${e.pts}</span>
-            </div>
-          </div>`;
       });
+    }
+
+    let visibleCount = 0;
+
+    function appendRows(from, to) {
+      extraPool.slice(from, to).forEach((e, i) => {
+        const pos = from + i + 4;
+        const trendIcon = { up: '▲', down: '▼', same: '—' }[e.trend];
+        const row = document.createElement('div');
+        row.className = 'lb-row';
+        row.innerHTML = `
+          <div class="lb-pos">${pos}</div>
+          <div class="lb-info">
+            <div class="lb-name">${e.name} <span class="lb-trend ${e.trend}">${trendIcon}</span></div>
+          </div>
+          <div class="lb-pts-col">
+            <span class="lb-pts">${e.pts}</span>
+          </div>`;
+        tableEl.appendChild(row);
+      });
+    }
+
+    function loadMore() {
+      const from = visibleCount;
+      const to   = Math.min(visibleCount + PAGE_SIZE, extraPool.length);
+      appendRows(from, to);
+      visibleCount = to;
 
       const btn = document.getElementById('load-more-btn');
       if (visibleCount >= extraPool.length) {
         btn.style.display = 'none';
       } else {
-        const remaining = extraPool.length - visibleCount;
-        const t = i18n[currentLang];
-        btn.textContent = currentLang === 'it'
-          ? `Carica altri (${remaining} rimasti)`
-          : `Load more (${remaining} left)`;
+        btn.textContent = i18n[currentLang].load_more;
       }
     }
 
-    renderRows();
+    loadMore();
 
-    document.getElementById('load-more-btn').addEventListener('click', () => {
-      visibleCount = Math.min(visibleCount + PAGE_SIZE, extraPool.length);
-      renderRows();
-    });
+    document.getElementById('load-more-btn').addEventListener('click', loadMore);
 
     /* ─── YOU CONTEXT ─── */
     const YOU_POS  = 1907;
@@ -845,11 +850,11 @@
     const youGapEl = document.getElementById('you-gap');
     const youEl    = document.getElementById('lb-you');
 
-    youGapEl.innerHTML = `<span class="you-gap-text" id="you-gap-text" title="Vai alla tua posizione">··· ${YOU_POS - 20} altri posti ···</span>`;
+    // BVB-style: show arrow + label, scroll to bottom on click
+    youGapEl.innerHTML = `<span class="you-gap-text" id="you-gap-text" data-i18n="you_position" style="cursor:pointer">↓ La tua posizione</span>`;
 
     document.getElementById('you-gap-text').addEventListener('click', () => {
-      document.querySelector('#lb-you .lb-row.highlight')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     });
 
     const youRows = [
