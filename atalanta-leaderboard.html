@@ -497,7 +497,19 @@
       margin: 0 -18px;
       padding: 28px 18px 0;
       padding-bottom: max(12px, env(safe-area-inset-bottom));
-      background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.95) 28px);
+    }
+    .you-context::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 0%, rgba(2,20,38,0.97) 28px);
+      opacity: 1;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .you-context.no-bg::before {
+      opacity: 0;
     }
 
     .you-gap {
@@ -877,6 +889,21 @@
           </div>
         </div>`;
     });
+    /* ─── HIDE YOU-CONTEXT GRADIENT WHEN NOTHING SCROLLS BEHIND IT ─── */
+    const youContext = document.getElementById('you-context');
+
+    function updateGradient() {
+      const barTop = youContext.getBoundingClientRect().top;
+      const rows = document.querySelectorAll('#lb-table .lb-row, .load-more-wrap');
+      let anyBehind = false;
+      rows.forEach(row => {
+        if (row.getBoundingClientRect().bottom > barTop) anyBehind = true;
+      });
+      youContext.classList.toggle('no-bg', !anyBehind);
+    }
+
+    window.addEventListener('scroll', updateGradient, { passive: true });
+    updateGradient();
   </script>
 
 </body>
