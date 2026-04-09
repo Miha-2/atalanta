@@ -205,8 +205,8 @@
     }
 
     .team-logo {
-      width: 88px;
-      height: 88px;
+      width: 116px;
+      height: 116px;
       object-fit: contain;
     }
 
@@ -233,13 +233,13 @@
     .cell-vs {
       display: flex;
       justify-content: center;
-      align-items: flex-end;
+      align-items: center;
       padding-bottom: 16px;
     }
 
     .vs-text {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 15px;
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: 0.14em;
       color: rgba(255,255,255,0.22);
@@ -606,22 +606,22 @@
       <!-- MATCHUP GRID — 5 rows, 3 columns -->
       <div class="matchup" role="group">
 
-        <!-- Row 1: logos -->
+        <!-- Row 1: logos + VS -->
         <div class="cell-logo">
           <img class="team-logo" src="Atalanta-logo.svg" alt="Atalanta B.C." />
-        </div>
-        <div class="cell-center-logo"></div>
-        <div class="cell-logo">
-          <img class="team-logo" src="Brescia_Calcio-logo.svg" alt="Brescia Calcio" />
-        </div>
-
-        <!-- Row 2: names + VS -->
-        <div class="cell-name">
-          <span class="team-name">Atalanta<br>B.C.</span>
         </div>
         <div class="cell-vs">
           <span class="vs-text">VS</span>
         </div>
+        <div class="cell-logo">
+          <img class="team-logo" src="Brescia_Calcio-logo.svg" alt="Brescia Calcio" />
+        </div>
+
+        <!-- Row 2: names -->
+        <div class="cell-name">
+          <span class="team-name">Atalanta<br>B.C.</span>
+        </div>
+        <div class="cell-center-logo"></div>
         <div class="cell-name">
           <span class="team-name">Brescia<br>Calcio</span>
         </div>
