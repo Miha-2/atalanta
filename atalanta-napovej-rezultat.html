@@ -59,37 +59,62 @@
       );
     }
 
-    /* ── LANGUAGE SWITCHER ── */
-    .lang-switcher {
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 10;
+    /* ── NAV ROW ── */
+    .nav-row {
       display: flex;
-      gap: 3px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
     }
 
-    .lang-btn {
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 12px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      padding: 5px 10px;
-      border: 1px solid rgba(201,168,76,0.35);
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back::before { content: '←'; font-size: 16px; }
+
+    /* ── LANGUAGE TOGGLE ── */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
       background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(201,168,76,0.3);
+      flex-shrink: 0;
+    }
+    .lang-divider {
+      width: 1px;
+      height: 18px;
+      background: rgba(201,168,76,0.25);
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: rgba(255,255,255,0.4);
+      padding: 7px 11px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1;
     }
-
-    .lang-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-    .lang-btn.active {
-      background: var(--gold);
-      color: var(--black);
-      border-color: var(--gold);
-    }
+    .lang-btn.active { background: var(--gold); color: var(--black); }
+    .lang-btn:not(.active):hover { color: var(--gold); }
 
     /* ── LAYOUT ── */
     .wrap {
@@ -97,7 +122,7 @@
       z-index: 2;
       max-width: 480px;
       margin: 0 auto;
-      padding: 36px 16px 52px;
+      padding: 1.2rem 18px 3rem;
     }
 
     /* ── HEADER ── */
@@ -578,13 +603,17 @@
   <div class="bg-fixed"></div>
   <div class="bg-overlay"></div>
 
-  <!-- LANGUAGE SWITCHER -->
-  <div class="lang-switcher">
-    <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
-    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
-  </div>
-
   <main class="wrap">
+
+    <!-- NAV ROW -->
+    <div class="nav-row">
+      <a class="nav-back" href="atalanta-leaderboard.html" id="nav-back">Classifica</a>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+        <span class="lang-divider"></span>
+        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
 
     <!-- HEADER -->
     <header class="hub-header">
@@ -803,6 +832,7 @@
         chkNews:      'Autorizzo Atalanta B.C. a utilizzare il mio contatto per l\'invio occasionale di notizie del club, concorsi e offerte speciali per i tifosi.',
         submitBtn:    'Invia il tuo pronostico',
         onceNote:     'Il risultato può essere pronosticato una sola volta.',
+        nav_back:     'Classifica',
         successTitle: 'Forza La Dea!',
         successDesc:  'Il tuo pronostico è stato inviato. In bocca al lupo, Nerazzurri!',
         sponsorLabel: 'SPONSOR',
@@ -827,6 +857,7 @@
         chkNews:      'I allow Atalanta B.C. to use my contact for occasional club news, contests, and special fan offers.',
         submitBtn:    'Submit your prediction',
         onceNote:     'You may submit your prediction only once.',
+        nav_back:     'Leaderboard',
         successTitle: 'Forza La Dea!',
         successDesc:  'Your prediction has been submitted. Good luck, Nerazzurri!',
         sponsorLabel: 'SPONSOR',
@@ -861,6 +892,7 @@
       document.getElementById('ft-rules').textContent   = s.ftRules;
       document.getElementById('ft-privacy').textContent = s.ftPrivacy;
       document.getElementById('ft-cookies').textContent = s.ftCookies;
+      document.getElementById('nav-back').textContent   = s.nav_back;
       document.getElementById('btn-it').classList.toggle('active', lang === 'it');
       document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     }
