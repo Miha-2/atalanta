@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prevedi il Risultato — Atalanta BC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,800;0,900;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --blue:       #0d68b1;
+      --blue-dark:  #042f56;
+      --black:      #000000;
+      --gold:       #c9a84c;
+      --gold-light: #e2c06e;
+      --white:      #ffffff;
+      --text:       #ffffff;
+      --muted:      #a8c4e0;
+      --stripe-w:   48px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      background-color: var(--black);
+    }
+
+    /* ── BACKGROUND: vertical blue/black stripes ── */
+    .bg-fixed {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: repeating-linear-gradient(
+        90deg,
+        var(--blue-dark) 0px,
+        var(--blue-dark) var(--stripe-w),
+        var(--black)     var(--stripe-w),
+        var(--black)     calc(var(--stripe-w) * 2)
+      );
+      background-size: calc(var(--stripe-w) * 2) 100%;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0.75) 0%,
+        rgba(4,47,86,0.60) 40%,
+        rgba(0,0,0,0.82) 100%
+      );
+    }
+
+    /* ── LANGUAGE SWITCHER ── */
+    .lang-switcher {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      display: flex;
+      gap: 3px;
+    }
+
+    .lang-btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border: 1px solid rgba(201,168,76,0.35);
+      background: rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .lang-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+    .lang-btn.active {
+      background: var(--gold);
+      color: var(--black);
+      border-color: var(--gold);
+    }
+
+    /* ── LAYOUT ── */
+    .wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 36px 16px 52px;
+    }
+
+    /* ── HEADER ── */
+    .hub-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      margin-bottom: 28px;
+      animation: fadeDown 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .header-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(42px, 11vw, 56px);
+      font-weight: 900;
+      line-height: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+      color: var(--white);
+      font-style: italic;
+    }
+
+    .header-title em { color: var(--gold); font-style: italic; }
+
+    .header-sub {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 300px;
+      margin-top: 4px;
+    }
+
+    .gold-rule {
+      width: 48px;
+      height: 2px;
+      background: var(--gold);
+      border: none;
+      margin: 2px auto 0;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: rgba(0,0,0,0.78);
+      border: 1px solid rgba(201,168,76,0.28);
+      padding: 24px 20px 20px;
+      animation: fadeUp 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--gold) 0%, var(--blue) 100%);
+    }
+
+    /* ── MATCH BADGE ── */
+    .match-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .match-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: var(--gold);
+      padding: 3px 10px;
+    }
+
+    .match-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ── MATCHUP GRID ──
+       Five explicit rows so logos, names, buttons, scores all perfectly align.
+       Columns: [home 1fr] [center 52px] [away 1fr]
+    ── */
+    .matchup {
+      display: grid;
+      grid-template-columns: 1fr 52px 1fr;
+      align-items: center;
+      row-gap: 0;
+      margin-bottom: 20px;
+    }
+
+    /* Row 1 — logos */
+    .cell-logo {
+      display: flex;
+      justify-content: center;
+      padding-bottom: 10px;
+    }
+
+    .team-logo {
+      width: 88px;
+      height: 88px;
+      object-fit: contain;
+    }
+
+    .cell-center-logo { /* spacer */ }
+
+    /* Row 2 — team names + VS */
+    .cell-name {
+      display: flex;
+      justify-content: center;
+      padding-bottom: 16px;
+    }
+
+    .team-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--white);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .cell-vs {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 16px;
+    }
+
+    .vs-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.22);
+      text-transform: uppercase;
+    }
+
+    /* Row 3 — up buttons */
+    .cell-btn {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    .score-btn {
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(201,168,76,0.35);
+      background: transparent;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .score-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+
+    .score-btn:active { transform: scale(0.88); }
+
+    .score-btn svg {
+      width: 16px; height: 16px;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    /* Row 4 — score numbers + colon */
+    .cell-score {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .score-display {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      min-width: 52px;
+      text-align: center;
+    }
+
+    .cell-colon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .score-colon {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 56px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    /* ── FORM SECTION ── */
+    .form-section {
+      background: rgba(13,104,177,0.13);
+      border: 1px solid rgba(13,104,177,0.28);
+      padding: 18px 16px 16px;
+    }
+
+    .form-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--white);
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .field input::placeholder { color: rgba(255,255,255,0.22); }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.07);
+    }
+
+    /* ── CHECKBOXES ── */
+    .checkboxes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      margin-top: 2px;
+      accent-color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .checkbox-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.5;
+    }
+
+    .checkbox-label a { color: var(--gold); text-decoration: underline; }
+
+    /* ── SUBMIT BUTTON ── */
+    .submit-btn {
+      width: 100%;
+      padding: 15px 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: var(--gold);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.08s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+    }
+
+    .submit-btn:hover { background: var(--gold-light); }
+    .submit-btn:active { transform: translateY(1px); }
+
+    .once-note {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* ── SUCCESS STATE ── */
+    .success-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+      padding: 20px 0 8px;
+    }
+
+    .success-icon {
+      width: 60px; height: 60px;
+      background: var(--gold);
+      display: grid;
+      place-items: center;
+    }
+
+    .success-icon svg {
+      width: 28px; height: 28px;
+      stroke: var(--black);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .success-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 34px;
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .success-score {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--white);
+    }
+
+    .success-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── SPONSOR ── */
+    .sponsor-strip {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: fadeUp 0.6s 0.25s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .sponsor-tab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .sponsor-tab-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(201,168,76,0.25);
+    }
+
+    .sponsor-tab span {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.5);
+    }
+
+    .sponsor-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0 8px;
+    }
+
+    /* ── GDPR ── */
+    .gdpr-note {
+      font-size: 11px;
+      color: rgba(255,255,255,0.22);
+      line-height: 1.5;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .gdpr-note a { color: rgba(255,255,255,0.3); text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    .hub-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 5px 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.22);
+      padding-top: 20px;
+      animation: fadeUp 0.6s 0.3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .hub-footer a { color: rgba(255,255,255,0.28); text-decoration: underline; }
+    .hub-footer a:hover { color: rgba(255,255,255,0.6); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    @media (max-width: 360px) {
+      .field-row { grid-template-columns: 1fr; }
+      .header-title { font-size: 38px; }
+      .score-display { font-size: 56px; }
+      .score-colon { font-size: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-fixed"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- LANGUAGE SWITCHER -->
+  <div class="lang-switcher">
+    <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  </div>
+
+  <main class="wrap">
+
+    <!-- HEADER -->
+    <header class="hub-header">
+      <h1 class="header-title" id="header-title">Prevedi<br>il <em>Risultato!</em></h1>
+      <hr class="gold-rule">
+      <p class="header-sub" id="header-sub">Invia il tuo pronostico e vinci un premio esclusivo per i tifosi della Dea.</p>
+    </header>
+
+    <!-- PANEL -->
+    <div class="panel">
+
+      <!-- Match badge -->
+      <div class="match-info">
+        <div class="match-dot"></div>
+        <span class="match-badge" id="match-badge">Serie A · Gewiss Stadium</span>
+        <div class="match-dot"></div>
+      </div>
+
+      <!-- MATCHUP GRID — 5 rows, 3 columns -->
+      <div class="matchup" role="group">
+
+        <!-- Row 1: logos -->
+        <div class="cell-logo">
+          <img class="team-logo" src="Atalanta-logo.svg" alt="Atalanta B.C." />
+        </div>
+        <div class="cell-center-logo"></div>
+        <div class="cell-logo">
+          <img class="team-logo" src="Brescia_Calcio-logo.svg" alt="Brescia Calcio" />
+        </div>
+
+        <!-- Row 2: names + VS -->
+        <div class="cell-name">
+          <span class="team-name">Atalanta<br>B.C.</span>
+        </div>
+        <div class="cell-vs">
+          <span class="vs-text">VS</span>
+        </div>
+        <div class="cell-name">
+          <span class="team-name">Brescia<br>Calcio</span>
+        </div>
+
+        <!-- Row 3: up buttons -->
+        <div class="cell-btn">
+          <button class="score-btn" onclick="change('home',1)" aria-label="Increase">
+            <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+        <div></div>
+        <div class="cell-btn">
+          <button class="score-btn" onclick="change('away',1)" aria-label="Increase">
+            <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+
+        <!-- Row 4: score numbers + colon -->
+        <div class="cell-score">
+          <div class="score-display" id="homeScore">0</div>
+        </div>
+        <div class="cell-colon">
+          <span class="score-colon">:</span>
+        </div>
+        <div class="cell-score">
+          <div class="score-display" id="awayScore">0</div>
+        </div>
+
+        <!-- Row 5: down buttons -->
+        <div class="cell-btn">
+          <button class="score-btn" onclick="change('home',-1)" aria-label="Decrease">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div></div>
+        <div class="cell-btn">
+          <button class="score-btn" onclick="change('away',-1)" aria-label="Decrease">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /matchup -->
+
+      <!-- FORM SECTION -->
+      <div class="form-section" id="formContent">
+        <div class="form-fields">
+          <div class="field-row">
+            <div class="field">
+              <label for="ime" id="lbl-name">Nome</label>
+              <input type="text" id="ime" name="ime" placeholder="Mario" autocomplete="given-name" />
+            </div>
+            <div class="field">
+              <label for="priimek" id="lbl-surname">Cognome</label>
+              <input type="text" id="priimek" name="priimek" placeholder="Rossi" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="email" id="lbl-email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="mario@bergamo.it" autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="checkboxes">
+          <label class="checkbox-row">
+            <input type="checkbox" id="pravila" />
+            <span class="checkbox-label" id="chk-rules">
+              Accetto il <a href="#">regolamento</a> del concorso "Prevedi il Risultato" e la Privacy Policy di Atalanta B.C.
+            </span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="novice" />
+            <span class="checkbox-label" id="chk-news">
+              Autorizzo Atalanta B.C. a utilizzare il mio contatto per l'invio occasionale di notizie del club, concorsi e offerte speciali per i tifosi.
+            </span>
+          </label>
+        </div>
+
+        <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+          Invia il tuo pronostico
+        </button>
+
+        <p class="once-note" id="once-note">Il risultato può essere pronosticato una sola volta.</p>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-state" id="successState">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-title" id="success-title">Forza La Dea!</div>
+        <div class="success-score" id="successScore">0 : 0</div>
+        <div class="success-desc" id="success-desc">Il tuo pronostico è stato inviato. In bocca al lupo, Nerazzurri!</div>
+      </div>
+
+    </div><!-- /panel -->
+
+    <!-- SPONSOR -->
+    <div class="sponsor-strip">
+      <div class="sponsor-tab">
+        <span class="sponsor-tab-line"></span>
+        <span id="sponsor-label">SPONSOR UFFICIALE</span>
+        <span class="sponsor-tab-line"></span>
+      </div>
+      <div class="sponsor-body">
+        <a href="https://acqualete.it/" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 256" height="54" style="display:block;"><path fill="#fff" d="M153.05 197.31q33.11 8.53 59.01 13.86c28.38 5.85 56.6 3.51 81.59-11.64 5.88-3.57 12.45-8.77 18.54-13.3 15.58-11.59 17.41 6.22 14.4 16.14-3.15 10.34-16.48 20.74-25.39 26.81q-31.03 21.12-68.88 25.19c-16.88 1.82-33.08 1.59-49.62-2.81q-31.76-8.44-62.26-20.74c-6.69-2.7-13.87-6.03-19.32-3.54-7.29 3.33-15.17 7.56-22.14 9.65-12.2 3.66-29.37 6.06-38.58-5.54q-5.73-7.22-4.87-17.64c2.2-26.49 41.04-22.79 58.48-22.12 14.85.56 24.42-6.95 31.77-18.84 13.28-21.51 25.91-52.28 34-71.24C184.7 43.22 241.7-.86 306.48.71q15.85.39 30.14 8.34c16.58 9.23 25.63 25.14 26.31 44.16 1.87 52.35-39.12 88.23-83.92 105.56-12.88 4.99-28.89 7.86-41.73 2.83-29.13-11.41-28.82-46.32-16.02-69.34q11.64-20.95 31.17-33.84c7.95-5.25 22.23-10.62 25.17 3.52 1.66 8-2.93 12.34-9.89 17.51q-4.8 3.57-12.97 12.76c-7.21 8.11-25.66 36.31-7.63 43.17 17.87 6.81 48.71-24.51 58.15-37.38q10.85-14.79 18.92-31.32 4.95-10.12 6.26-17.19c1.88-10.14-8.11-17.57-17.17-19.58-47.08-10.43-91.99 42.83-109.18 80.26-9.8 21.35-18.97 43.07-31.29 63.13q-8.16 13.3-19.86 23.56-.38.33.11.45Zm-68.37 14.23c-5.86-.66-15.01-1.6-20.16.89a1.54 1.48 0 0 0-.69.66c-1.81 3.54 1.18 5.18 4.26 5.12q9.59-.2 16.78-6.03.68-.55-.19-.64Zm472.14-14.84a.7.7 49.7 0 0 1.06.09q9.99-10 17.19-22.21c2.33-3.97 8.46-7.83 13.15-5.15 18.69 10.65-10.61 39.78-19.68 47.28-11.89 9.82-29.96 18.12-45.51 13.75-23.8-6.69-19.66-37.7-14.61-55.48q9.15-32.25 18.14-63.67a1.01 1.01-82.3 0 0-.98-1.29c-8.93.08-20.6 2.52-18.76-11.77.92-7.18 2.21-14.07 11.45-13.83q7.9.2 15.85-.05a.65.64-83.5 0 0 .61-.49q6.77-26.87 13.79-53.6c1.69-6.43 5.87-10.09 12.57-10.06q12.99.06 25.94.03c13.66-.04 17.45 3.94 13.84 17.21q-6.34 23.36-12.5 46.74a.41.39 7.4 0 0 .39.49q6.61.11 13.12.06c6.26-.05 10.51 1.14 10.81 8.04.28 6.4.1 12.12-5.59 16.14-3.2 2.28-19.83 1.08-25.1 1.09a1.63 1.62 8.1 0 0-1.56 1.17c-2.33 8.01-24.76 83.91-23.62 85.51Zm-159.56-25.39c-1.59 15.57 4.27 32.38 23.59 30.01q15.34-1.89 26.54-12.46c4.7-4.44 12.08-14.42 19.68-13.86 8.51.63 9.34 9.12 6.88 16.21q-1.87 5.39-7.37 11.62-25.49 28.86-63.07 31.04c-48.93 2.83-70.1-34.88-60.48-79 5.01-22.99 20.9-44.44 40.22-57.59 26.59-18.09 59.47-28.53 90.78-15.57 13.94 5.77 20.07 16.78 19.13 31.39-1.41 22.09-11.27 35.85-31.54 43.91-21.08 8.38-41.39 11.47-63.81 13.75a.61.61 0 0 0-.55.55ZM438.51 96c-17.19-.88-33.01 38.04-37.03 51.1a.42.42-85 0 0 .45.54c12.15-1.57 23.18-6.51 30.93-16.28 5.8-7.32 12.9-23.92 8.34-33.56q-.81-1.7-2.69-1.8Zm172.82 80.73c.3-49.07 35.18-83.87 79.86-97.38q25.42-7.69 50.95 1.23 20.79 7.27 22.16 29.11.31 4.94-2.75 16.95c-4.49 17.62-17.79 26.65-34.07 32.37q-28.56 10.03-58.84 11.44a.79.79-88.7 0 0-.75.72c-1.13 13.66 2.77 30.39 20.1 30.06q17.5-.33 30.45-12.81c4.34-4.18 8.67-9.48 14.06-12.22 4.48-2.27 9.53-1.43 12.16 2.91 4.11 6.8-1.52 16.53-6.08 21.95q-30.5 36.19-77.84 32.7c-30.03-2.22-49.59-28.08-49.41-57.03Zm94.17-80.46c-15.94 5.34-28.64 36.06-33.27 50.73a.49.48-84.9 0 0 .52.63q33.24-4.54 40.25-37.45c1.12-5.22 1.06-16.79-7.5-13.91Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- GDPR -->
+    <p class="gdpr-note" id="gdpr-note">
+      Inviando il modulo confermo di essere informato sul trattamento dei dati personali ai fini del concorso. Titolare del trattamento: Atalanta B.C.
+      Il trattamento per il sistema CRM è effettuato da un responsabile esterno ai sensi della <a href="#">Privacy Policy</a>.
+    </p>
+
+    <!-- FOOTER -->
+    <footer class="hub-footer">
+      <a href="#" id="ft-rules">Regolamento</a>
+      <span>·</span>
+      <a href="#" id="ft-privacy">Privacy Policy</a>
+      <span>·</span>
+      <a href="#" id="ft-cookies">Cookie</a>
+    </footer>
+
+  </main>
+
+  <script>
+    /* ── SCORE LOGIC ── */
+    const scores = { home: 0, away: 0 };
+
+    function change(side, delta) {
+      scores[side] = Math.max(0, Math.min(20, scores[side] + delta));
+      document.getElementById(side + 'Score').textContent = scores[side];
+    }
+
+    function submitForm() {
+      const ime     = document.getElementById('ime').value.trim();
+      const priimek = document.getElementById('priimek').value.trim();
+      const email   = document.getElementById('email').value.trim();
+      const pravila = document.getElementById('pravila').checked;
+
+      if (!ime || !priimek || !email || !pravila) {
+        const btn = document.getElementById('submitBtn');
+        btn.style.animation = 'none';
+        btn.offsetHeight;
+        btn.style.animation = 'shake 0.35s ease';
+        return;
+      }
+
+      document.getElementById('successScore').textContent = scores.home + ' : ' + scores.away;
+      document.getElementById('formContent').style.display = 'none';
+
+      const success = document.getElementById('successState');
+      success.style.display = 'flex';
+      success.style.animation = 'fadeUp 0.5s ease both';
+
+      document.querySelectorAll('.score-btn').forEach(b => {
+        b.style.opacity = '0';
+        b.style.pointerEvents = 'none';
+      });
+    }
+
+    /* ── LANGUAGE SWITCHER ── */
+    const STRINGS = {
+      it: {
+        htmlLang:     'it',
+        pageTitle:    'Prevedi il Risultato — Atalanta BC',
+        headerTitle:  'Prevedi<br>il <em>Risultato!</em>',
+        headerSub:    'Invia il tuo pronostico e vinci un premio esclusivo per i tifosi della Dea.',
+        matchBadge:   'Serie A · Gewiss Stadium',
+        lblName:      'Nome',
+        lblSurname:   'Cognome',
+        lblEmail:     'E-mail',
+        placeName:    'Mario',
+        placeSurname: 'Rossi',
+        placeEmail:   'mario@bergamo.it',
+        chkRules:     'Accetto il <a href="#">regolamento</a> del concorso "Prevedi il Risultato" e la Privacy Policy di Atalanta B.C.',
+        chkNews:      'Autorizzo Atalanta B.C. a utilizzare il mio contatto per l\'invio occasionale di notizie del club, concorsi e offerte speciali per i tifosi.',
+        submitBtn:    'Invia il tuo pronostico',
+        onceNote:     'Il risultato può essere pronosticato una sola volta.',
+        successTitle: 'Forza La Dea!',
+        successDesc:  'Il tuo pronostico è stato inviato. In bocca al lupo, Nerazzurri!',
+        sponsorLabel: 'SPONSOR',
+        gdprNote:     'Inviando il modulo confermo di essere informato sul trattamento dei dati personali ai fini del concorso. Titolare del trattamento: Atalanta B.C. Il trattamento per il sistema CRM è effettuato da un responsabile esterno ai sensi della <a href="#">Privacy Policy</a>.',
+        ftRules:      'Regolamento',
+        ftPrivacy:    'Privacy Policy',
+        ftCookies:    'Cookie',
+      },
+      en: {
+        htmlLang:     'en',
+        pageTitle:    'Predict the Score — Atalanta BC',
+        headerTitle:  'Predict<br>the <em>Score!</em>',
+        headerSub:    'Submit your prediction and win an exclusive prize for La Dea supporters.',
+        matchBadge:   'Serie A · Gewiss Stadium',
+        lblName:      'First Name',
+        lblSurname:   'Last Name',
+        lblEmail:     'Email',
+        placeName:    'Mario',
+        placeSurname: 'Rossi',
+        placeEmail:   'mario@bergamo.it',
+        chkRules:     'I agree to the <a href="#">rules</a> of the "Predict the Score" contest and Atalanta B.C.\'s Privacy Policy.',
+        chkNews:      'I allow Atalanta B.C. to use my contact for occasional club news, contests, and special fan offers.',
+        submitBtn:    'Submit your prediction',
+        onceNote:     'You may submit your prediction only once.',
+        successTitle: 'Forza La Dea!',
+        successDesc:  'Your prediction has been submitted. Good luck, Nerazzurri!',
+        sponsorLabel: 'SPONSOR',
+        gdprNote:     'By submitting this form I confirm I have been informed about the processing of personal data for the contest. Data controller: Atalanta B.C. CRM processing is carried out by a contracted processor in accordance with the <a href="#">Privacy Policy</a>.',
+        ftRules:      'Contest Rules',
+        ftPrivacy:    'Privacy Policy',
+        ftCookies:    'Cookies',
+      }
+    };
+
+    function setLang(lang) {
+      const s = STRINGS[lang];
+      document.documentElement.lang = s.htmlLang;
+      document.title = s.pageTitle;
+      document.getElementById('header-title').innerHTML = s.headerTitle;
+      document.getElementById('header-sub').textContent = s.headerSub;
+      document.getElementById('match-badge').textContent = s.matchBadge;
+      document.getElementById('lbl-name').textContent    = s.lblName;
+      document.getElementById('lbl-surname').textContent = s.lblSurname;
+      document.getElementById('lbl-email').textContent   = s.lblEmail;
+      document.getElementById('ime').placeholder         = s.placeName;
+      document.getElementById('priimek').placeholder     = s.placeSurname;
+      document.getElementById('email').placeholder       = s.placeEmail;
+      document.getElementById('chk-rules').innerHTML     = s.chkRules;
+      document.getElementById('chk-news').innerHTML      = s.chkNews;
+      document.getElementById('submitBtn').textContent   = s.submitBtn;
+      document.getElementById('once-note').textContent   = s.onceNote;
+      document.getElementById('success-title').textContent = s.successTitle;
+      document.getElementById('success-desc').textContent  = s.successDesc;
+      document.getElementById('sponsor-label').textContent = s.sponsorLabel;
+      document.getElementById('gdpr-note').innerHTML    = s.gdprNote;
+      document.getElementById('ft-rules').textContent   = s.ftRules;
+      document.getElementById('ft-privacy').textContent = s.ftPrivacy;
+      document.getElementById('ft-cookies').textContent = s.ftCookies;
+      document.getElementById('btn-it').classList.toggle('active', lang === 'it');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    }
+
+    setLang('it');
+
+    /* ── SHAKE ── */
+    const st = document.createElement('style');
+    st.textContent = `
+      @keyframes shake {
+        0%,100% { transform: translateX(0); }
+        20%      { transform: translateX(-7px); }
+        40%      { transform: translateX(7px); }
+        60%      { transform: translateX(-4px); }
+        80%      { transform: translateX(4px); }
+      }
+    `;
+    document.head.appendChild(st);
+  </script>
+
+</body>
+</html>
